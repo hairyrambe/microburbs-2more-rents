@@ -51,4 +51,4 @@ No API key, no supplied files, and no API output. `data/`, `raw/` and `.env` are
 - TODO: add any other open data used (e.g. OpenStreetMap © OpenStreetMap contributors, ODbL).
 
 ## Team
-Noel Koh, Alden, Indra.
+Noel Koh, Alden Bay, Indrapa Hewakaluge.
