@@ -64,5 +64,5 @@ No API key, no supplied files, and no API output. `data/`, `raw/` and `.env` are
 
 ## Team
 - **Noel Koh**: modelling pipeline, validation and report.
-- **Indra**: rent explorer app, and an independent stricter rebuild of the model that cross-checked ours on the same adverts (within $1); two of its changes are adopted here.
+- **Indrapa Hewakaluge**: rent explorer app, and an independent stricter rebuild of the model that cross-checked ours on the same adverts (within $1); two of its changes are adopted here.
 - **Alden Bay**: pitch and demo.
