@@ -1,0 +1,264 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2more | Sydney rent explorer</title><style>:root{--navy:#112f32;--green:#c9ef67;--ink:#193436;--muted:#627273;--line:#dce4df;--bg:#f3f5ef}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #4c8d78;outline-offset:3px}[hidden]{display:none!important}header{height:84px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(5vw,24px);background:#fff}.brand{text-decoration:none;color:var(--ink);font-size:31px;letter-spacing:-2px;font-weight:850;display:flex;align-items:center;gap:22px}.brand span{font-size:10px;letter-spacing:2px;font-weight:650;border-left:1px solid var(--line);padding-left:22px}.local{font-size:12px;color:#426451;background:#edf4e8;padding:7px 12px;border-radius:30px}main{max-width:1320px;margin:auto;padding:48px 36px 20px}.intro{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;gap:24px}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:750;color:#5b746b;margin:0 0 16px}h1{font-size:clamp(36px,4.4vw,58px);line-height:1.07;letter-spacing:-2.8px;margin:0 0 20px;font-weight:650}.lede{color:var(--muted);font-size:16px;margin:0}.summary{border-left:1px solid #cbd6ca;padding-left:36px;min-width:275px}.summary>span{font-size:11px;text-transform:uppercase;letter-spacing:1px}.summary strong{display:block;font-size:44px;letter-spacing:-2px;margin:12px 0 3px}.summary strong span:not(#modelError){font-size:17px;color:var(--muted);letter-spacing:0;margin-left:6px}.summary p{font-size:12px;color:var(--muted);margin:0}.workspace{display:grid;grid-template-columns:minmax(300px,.92fr) minmax(0,1.4fr);gap:24px;align-items:start}.search-panel,.detail{background:white;border:1px solid var(--line);border-radius:18px}.search-panel{padding:25px}.search-panel h2{margin:0 0 20px;font-size:21px;letter-spacing:-.5px}label{font-size:11px;font-weight:650;display:block;margin-bottom:7px;color:#56716c}input,select{width:100%;border:1px solid #cbd8cf;border-radius:8px;padding:12px;background:#fff;color:var(--ink)}input{background:#f8faf6}input::placeholder{font-size:13px;color:#81918b}.filters{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:16px}.filters select{padding:9px;font-size:13px}.result-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:15px}.result-heading p{font-size:11px;color:var(--muted)}.text-button{border:0;background:none;font-size:11px;color:#2b6e55;text-decoration:underline}.results{max-height:460px;overflow:auto;margin:0 -8px;padding:0 8px}.result{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #e8ede7;padding:16px 12px;background:#fff;border-radius:8px;color:var(--ink)}.result:hover{background:#f4f7ee}.result.active{background:#e9f1dd;box-shadow:inset 3px 0 #628d2f}.result strong{display:block;font-size:12px;line-height:1.45;font-weight:650}.result span{font-size:11px;display:block;color:var(--muted);margin-top:5px}.no-results{padding:25px 10px;color:var(--muted);font-size:14px}.detail{min-height:620px;padding:32px}.empty{min-height:540px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}.house-icon{font-size:65px;color:#567953;background:#eef4e6;border-radius:28px;width:100px;margin-bottom:25px}.empty h2{font-size:24px;font-weight:600;letter-spacing:-.7px;margin:0}.empty p{color:var(--muted);font-size:14px}.empty-tags{display:flex;gap:8px;margin-top:12px}.empty-tags span{background:#f0f3ed;border-radius:20px;padding:6px 12px;font-size:11px}#address{font-size:25px;letter-spacing:-.8px;line-height:1.3;margin:0 0 14px;overflow-wrap:anywhere}.attributes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}.attributes span{font-size:11px;padding:5px 10px;border:1px solid var(--line);border-radius:5px}.scenario{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.scenario>span{font-size:12px;font-weight:600}.switch{background:#edf1e9;padding:4px;border-radius:9px;display:flex}.switch button{font-size:11px;border:0;background:none;padding:8px 10px;border-radius:6px;color:#56655d}.switch button[aria-pressed=true]{background:white;box-shadow:0 1px 4px #0001;color:var(--ink);font-weight:700}.hero-price{background:var(--navy);border-radius:12px;padding:28px;color:white}.hero-price>p:first-child{font-size:10px;letter-spacing:1.8px;color:var(--green);margin:0 0 9px}.hero-price strong{font-size:60px;letter-spacing:-2px;font-weight:600;line-height:1.2}.hero-price div>span{color:#b5c7c1;font-size:15px;margin-left:9px}.hero-price>p:last-child{font-size:11px;color:#b6c9c2;margin:12px 0 0}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:18px 0}.comparison>div{padding:17px;border:1px solid var(--line);border-radius:9px}.comparison span{display:block;font-size:11px;color:var(--muted)}.comparison strong{display:inline-block;font-size:25px;font-weight:650;margin-top:5px;letter-spacing:-.7px}.comparison small{font-size:10px;color:var(--muted);margin-left:7px}.premium{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#ebf4dc;border-radius:8px;padding:16px}.premium span{display:block;font-size:12px;font-weight:650}.premium small{font-size:10px;color:#6a795e}.premium strong{font-size:21px;white-space:nowrap}.caveat{font-size:11px;color:var(--muted);line-height:1.6;margin:17px 0}details{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}summary{cursor:pointer;color:var(--ink);font-weight:600}dl{display:grid;grid-template-columns:125px 1fr;font-size:11px;gap:10px}dd{margin:0;overflow-wrap:anywhere}dt{font-weight:600}.method{display:grid;grid-template-columns:1.5fr .7fr .7fr;align-items:center;gap:30px;padding:42px 6px 24px}.method h2{font-size:23px;letter-spacing:-.6px;margin:0 0 10px}.method p:not(.eyebrow){font-size:12px;color:var(--muted);max-width:440px;margin:0}.method .eyebrow{margin-bottom:10px}.metric{border-left:1px solid #d5dfd1;padding-left:28px}.metric strong{display:block;font-size:34px;font-weight:600;letter-spacing:-1.2px}.metric span{font-size:11px;color:var(--muted)}.method-details{margin:8px 6px 30px}.method-details p{max-width:1000px}footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding-top:20px;color:var(--muted);font-size:10px}footer strong{font-size:21px;color:var(--ink);letter-spacing:-1px}.notice,.error{border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12px}.notice{background:#fff0c4;color:#785a1f}.error{background:#ffe5df;color:#922b1c}@media(max-width:850px){main{padding:30px 18px}.workspace{grid-template-columns:1fr}.summary{display:none}.intro{margin-bottom:30px}.results{max-height:270px}.detail{min-height:400px;padding:23px}.empty{min-height:350px}.method{grid-template-columns:1fr 1fr;gap:20px}.method>div:first-child{grid-column:1/-1}.metric{padding-left:15px}.hero-price strong{font-size:49px}header{padding:0 20px}.brand span{display:none}.scenario{flex-wrap:wrap}footer{gap:15px;flex-wrap:wrap}.comparison small{display:block;margin:0}.desktop{display:none}}
+/* Interface refinement: compact hierarchy, navigable search and clear states. */
+html{scroll-behavior:smooth}header{height:74px;position:sticky;top:0;z-index:5}header nav{display:flex;align-items:center;gap:24px}header nav>a{font-size:12px;color:var(--ink);text-underline-offset:4px}main{padding-top:36px}.intro{margin-bottom:30px}h1{font-size:clamp(34px,4vw,51px);letter-spacing:-2px}.summary{min-width:295px}.summary .score-label{font-size:9px;letter-spacing:1.3px;color:#45655c;margin-top:17px;font-weight:650}.summary strong{margin-top:3px;font-size:40px}.panel-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.panel-title h2{margin:0}.key-hint{font-size:10px;color:#6b7973;background:#f2f5ee;border:1px solid #e2e8dc;border-radius:5px;padding:4px 7px}.search-hint{font-size:11px;color:#6b7a72;line-height:1.55;margin:8px 0 0}.filters{margin-top:14px}.results{max-height:400px;scrollbar-width:thin;scrollbar-color:#c9d4c6 transparent}.result{padding:14px 12px;transition:background .15s ease}.result strong{font-size:13px;font-weight:600}.result:disabled{cursor:wait;opacity:.5}.pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:15px;margin-top:9px;border-top:1px solid var(--line)}.pagination button{font-size:11px;border:1px solid #d4dfd0;border-radius:6px;background:#f8faf5;color:var(--ink);padding:8px 10px}.pagination button:disabled{opacity:.4;cursor:default}.pagination>span{font-size:10px;color:var(--muted)}.detail{min-height:590px;scroll-margin-top:90px}.detail-status{padding:120px 15px;text-align:center;color:var(--muted);font-size:14px}.empty{min-height:515px}.house-icon{display:flex;align-items:center;justify-content:center;height:100px}.premium-amount{text-align:right}.premium-amount small{display:block;margin-top:3px}.zero-premium{border-left:3px solid #9ab66b;padding:6px 11px;background:#f7f9f1;font-size:11px;color:#596e4a}#address{text-transform:none;letter-spacing:-.55px;font-weight:650}.hero-price strong{font-variant-numeric:tabular-nums}.hero-price>p:last-child{color:#c5d5cf}.caveat{color:#61736b}.method{padding-top:34px}.method h2{font-size:22px}button,summary{-webkit-tap-highlight-color:transparent}@media(max-width:850px){header{height:64px}header nav{gap:12px}.local{font-size:10px;padding:6px 9px}header nav>a{font-size:11px}main{padding-top:24px}.intro{margin-bottom:24px}.results{max-height:260px}.detail{min-height:360px;scroll-margin-top:78px}.empty{min-height:330px}.key-hint{display:none}h1{font-size:37px}.hero-price strong{font-size:48px}}@media(max-width:420px){header{padding:0 14px}.brand{font-size:28px}.local{font-size:9px}header nav{gap:8px}header nav>a{font-size:10px}.detail{padding:19px}h1{font-size:33px}.comparison strong{font-size:23px}.premium strong{font-size:18px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.result{transition:none}}
+
+#modelError{font-size:inherit;color:inherit;letter-spacing:inherit;margin:0}
+</style></head><body>
+<header><a class="brand" href="#">2more<span>RENT EXPLORER</span></a><nav aria-label="Main navigation"><a id="reportLink" href="report.html" target="_blank" rel="noopener" hidden>Read our report <span aria-hidden="true">↗</span></a><span class="local" id="modeLabel"><span aria-hidden="true">●</span> Private local view</span></nav></header>
+<main><section class="intro"><div><p class="eyebrow">SYDNEY · WEEKLY ASKING RENT</p><h1>Know the rent.<br>See the parking difference.</h1><p class="lede">Find a flat and compare its estimated weekly rent<br class="desktop"> with and without a car space.</p></div><div class="summary"><span id="coverage">Loading flats…</span><p class="score-label">MODEL CHECK · MEDIAN ABSOLUTE ERROR</p><strong><span id="modelError">—</span><span>/week</span></strong><p id="modelCheckLabel">Loading model check…</p></div></section>
+<div id="demoNotice" class="notice" hidden>DEMONSTRATION MODE · All flats and rents shown below are fictional. Accuracy figures describe the real model’s separate retrospective check.</div>
+<div id="error" class="error" role="alert" hidden></div>
+<section class="workspace"><aside class="search-panel"><div class="panel-title"><h2>Find a flat</h2><span class="key-hint" aria-hidden="true">/ to search</span></div><label for="search">Address, suburb or G-NAF ID</label><input id="search" type="search" placeholder="e.g. Waterloo or a street address" autocomplete="off" aria-describedby="searchHint"><p id="searchHint" class="search-hint">Search matches street names too. Use the suburb filter for an exact area.</p><div class="filters"><div><label for="suburb">Suburb</label><select id="suburb"><option value="">All suburbs</option></select></div><div><label for="beds">Bedrooms</label><select id="beds"><option value="">Any</option><option value="0">0 / studio</option><option value="1">1</option><option value="2">2</option><option value="3+">3+</option></select></div></div><div class="result-heading"><p id="count" role="status" aria-live="polite">Loading…</p><button id="clear" class="text-button">Clear filters</button></div><div id="results" class="results" aria-label="Matching flats" aria-busy="false"></div><div class="pagination" id="pagination" hidden><button id="previous" aria-label="Previous results page">← Previous</button><span id="pageLabel"></span><button id="next" aria-label="Next results page">Next →</button></div></aside>
+<article class="detail" id="detail" aria-busy="false"><div id="detailStatus" role="status" class="detail-status" hidden></div><div id="empty" class="empty"><div class="house-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 22 24 8l16 14v18H8V22Z"/><path d="M19 40V26h10v14M24 8v-2"/></svg></div><h2>A clearer view of weekly rent.</h2><p>Select a flat from the results to explore<br>both parking scenarios.</p><div class="empty-tags"><span>With parking</span><span>Without parking</span></div></div>
+<div id="property" hidden><p class="eyebrow" id="location"></p><h2 id="address" tabindex="-1"></h2><div id="attributes" class="attributes"></div><div class="scenario"><span>Explore a scenario</span><div class="switch" role="group" aria-label="Parking scenario"><button id="without" aria-pressed="false">Without parking</button><button id="with" aria-pressed="true">With parking</button></div></div><section class="hero-price"><p id="scenarioLabel">WITH AT LEAST ONE CAR SPACE</p><div aria-live="polite" aria-atomic="true"><strong id="price"></strong><span>/ week</span></div><p>Estimated asking rent · as at 31 July 2026</p></section><div class="comparison"><div><span>Without parking</span><strong id="noPrice"></strong><small>per week</small></div><div><span>With parking</span><strong id="yesPrice"></strong><small>per week</small></div></div><div class="premium"><div><span>Estimated parking premium</span><small>Difference between the two scenarios</small></div><div class="premium-amount"><strong id="premium"></strong><small id="annualPremium"></small></div></div><p id="zeroPremium" class="zero-premium" hidden>The model gives the same rent in both scenarios. This does not establish that parking has no value.</p><p class="caveat">This comparison reflects patterns in historical adverts. It is not a guaranteed rent or a causal valuation of a parking space.</p><details><summary>Property record &amp; prediction source</summary><dl><dt>G-NAF ID</dt><dd id="gnaf"></dd><dt>Recorded parking</dt><dd id="recordedParking"></dd><dt>Prediction file</dt><dd id="source"></dd></dl><p>Floor and recorded parking are shown from the input file. Floor was not used by this model. Both parking scenarios are available regardless of the recorded parking.</p></details></div></article></section>
+<section class="method"><div><p class="eyebrow">CHECKED AGAINST LATER ADVERTS</p><h2>Measured, with limits made clear.</h2><p>The exact submission pipeline was re-run as if it were 30 April, then scored on May–July adverts for the same flats. Choices were made on this and an earlier Feb–Apr check, so these are development results, not an untouched test.</p></div><div class="metric"><strong id="modelWithin">—</strong><span>within $100 / week</span></div><div class="metric"><strong id="modelR2">—</strong><span id="modelN">R²</span></div></section>
+<details class="method-details"><summary>Method, sources &amp; limitations</summary><p>Model: gradient boosting with recorded flat attributes, location, floor, block housing counts, earlier building and block rents, and prior rent history adjusted for market movement by a same-flat rent index. Historical features use earlier adverts only; bedrooms, bathrooms and parking on old adverts are never copied from the July input. Final data cutoff: 31 July 2026. Source: privately supplied Microburbs rental files; address identifiers use Open G-NAF, © Geoscape Australia, licensed by the Commonwealth with attribution and a mailing restriction.</p><p>The shown accuracy is a retrospective chronological result, not the organisers’ hidden judging result or a confidence interval for a particular flat. Prices are rounded to $0.50. Negative modelled parking premiums are set to zero by raising the with-parking prediction to the without-parking prediction. Missing attributes, unusual flats and unobserved building quality can reduce accuracy. Predictions represent advertised asking rents, not signed leases.</p><p>No API calls, external maps or analytics are used. Supplied records stay on this computer. Use the separate fictional demo mode for publicly shared recordings.</p></details>
+<footer><strong>2more</strong><span>Sydney Data Hackathon · Task 4</span><span>Local explorer · No data uploads</span></footer></main><script>'use strict';
+const $ = id => document.getElementById(id);
+const money = n => new Intl.NumberFormat('en-AU', {
+  style: 'currency', currency: 'AUD',
+  minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+  maximumFractionDigits: 2
+}).format(n);
+const displayAddress = address => address.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+let meta, selected = null, parking = true;
+let searchSequence = 0, detailSequence = 0, timer;
+let currentPage = 1, pageCount = 1;
+
+
+const FIELDS = ['gnaf_id','address','suburb','bedrooms','bathrooms','floor_level','car_space','with_parking','without_parking'];
+const ROWS = [["SYNTHETIC-1","FICTIONAL FLAT 1, 10 EXAMPLE LANE","Demo Harbour",1,1,1,null,820,770],["SYNTHETIC-2","FICTIONAL FLAT 2, 10 EXAMPLE LANE","Demo Harbour",2,2,2,null,1100,1040],["SYNTHETIC-3","FICTIONAL FLAT 3, 10 EXAMPLE LANE","Demo Gardens",0,1,3,null,590,560],["SYNTHETIC-4","FICTIONAL FLAT 4, 10 EXAMPLE LANE","Demo Gardens",3,2,4,null,1450,1400]].map(r => Object.fromEntries(FIELDS.map((f, i) => [f, r[i]])));
+const META = {"count": 4, "suburbs": ["Demo Gardens", "Demo Harbour"], "source": "Synthetic demonstration \u2014 no supplied records", "demo": true, "metrics": {"n": 3773, "median_absolute_error": 43.0, "within_100_pct": 80.65200106016432, "r_squared": 0.9076289115661567, "mean_absolute_error": 68.3896103896104, "median_bias": 14.5, "origin": "2026-04-30", "start": "2026-05-01", "end": "2026-07-31", "iterations": 1500, "classification": "Development check (exact submission pipeline, input flats only); not the hidden judging score"}, "report_available": true};
+const INDEX = new Map(ROWS.map(r => [r.gnaf_id, r]));
+const natural = t => t.split(/(\d+)/).map(p => /^\d+$/.test(p) ? [0, +p] : [1, p.toLowerCase()]);
+function cmpNat(a, b) {
+  const x = natural(a), y = natural(b);
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    if (x[i][0] !== y[i][0]) return x[i][0] - y[i][0];
+    if (x[i][1] < y[i][1]) return -1; if (x[i][1] > y[i][1]) return 1;
+  }
+  return x.length - y.length;
+}
+const ORDERED = ROWS.slice().sort((a, b) => a.suburb < b.suburb ? -1 : a.suburb > b.suburb ? 1 : cmpNat(a.address, b.address));
+const KEYS = new Map(ROWS.map(r => [r.gnaf_id, `${r.address} ${r.suburb} ${r.gnaf_id}`.toLowerCase()]));
+function searchRows(q) {
+  const tokens = (q.get('q') || '').toLowerCase().split(/\s+/).filter(Boolean);
+  const suburb = q.get('suburb') || '', beds = q.get('beds') || '';
+  let page = Math.max(1, parseInt(q.get('page') || '1', 10) || 1);
+  const matches = [];
+  for (const r of ORDERED) {
+    if (suburb && r.suburb !== suburb) continue;
+    if (beds) {
+      if (r.bedrooms == null) continue;
+      if (beds === '3+') { if (r.bedrooms < 3) continue; } else if (r.bedrooms !== +beds) continue;
+    }
+    const k = KEYS.get(r.gnaf_id);
+    if (tokens.every(t => k.includes(t))) matches.push(r);
+  }
+  const size = 20, pages = Math.max(1, Math.ceil(matches.length / size));
+  page = Math.min(page, pages);
+  const start = (page - 1) * size;
+  return { total: matches.length, page, pages, start: matches.length ? start + 1 : 0,
+           end: Math.min(start + size, matches.length),
+           items: matches.slice(start, start + size).map(r => ({ gnaf_id: r.gnaf_id, address: r.address, suburb: r.suburb, bedrooms: r.bedrooms, bathrooms: r.bathrooms })) };
+}
+async function api(path) {
+  const url = new URL(path, 'https://local.invalid');
+  if (url.pathname === '/api/meta') return META;
+  if (url.pathname === '/api/search') return searchRows(url.searchParams);
+  if (url.pathname === '/api/property') {
+    const r = INDEX.get(url.searchParams.get('id') || '');
+    if (!r) throw Error('Flat not found');
+    return r;
+  }
+  throw Error('Not found');
+}
+function showError(error) {
+  $('error').textContent = error.message || String(error);
+  $('error').hidden = false;
+}
+function clearSelection() {
+  detailSequence++;
+  selected = null;
+  $('property').hidden = true;
+  $('empty').hidden = false;
+  $('detailStatus').hidden = true;
+  $('detail').setAttribute('aria-busy', 'false');
+}
+function setScenario(value) {
+  parking = value;
+  $('with').setAttribute('aria-pressed', String(value));
+  $('without').setAttribute('aria-pressed', String(!value));
+  if (!selected) return;
+  $('price').textContent = money(value ? selected.with_parking : selected.without_parking);
+  $('scenarioLabel').textContent = value ? 'WITH AT LEAST ONE CAR SPACE' : 'WITHOUT A CAR SPACE';
+}
+function attribute(label, value) {
+  if (value === null) return label === 'Floor' ? 'Floor unknown' : `${label} unknown`;
+  if (label === 'Floor') return `Floor ${value}`;
+  return `${value} ${label === 'Bedrooms' ? (value === 1 ? 'bedroom' : 'bedrooms') : (value === 1 ? 'bathroom' : 'bathrooms')}`;
+}
+async function choose(id) {
+  const ticket = ++detailSequence;
+  $('detail').setAttribute('aria-busy', 'true');
+  $('detailStatus').textContent = 'Loading the selected flat…';
+  $('detailStatus').hidden = false;
+  $('property').hidden = true;
+  $('empty').hidden = true;
+  try {
+    const record = await api('/api/property?id=' + encodeURIComponent(id));
+    if (ticket !== detailSequence) return;
+    selected = record;
+    $('error').hidden = true;
+    $('property').hidden = false;
+    $('location').textContent = record.suburb + (meta.demo ? ' · FICTIONAL EXAMPLE' : '');
+    $('address').textContent = displayAddress(record.address);
+    $('attributes').replaceChildren();
+    for (const [label, value] of [['Bedrooms', record.bedrooms], ['Bathrooms', record.bathrooms], ['Floor', record.floor_level]]) {
+      const tag = document.createElement('span');
+      tag.textContent = attribute(label, value);
+      $('attributes').append(tag);
+    }
+    $('yesPrice').textContent = money(record.with_parking);
+    $('noPrice').textContent = money(record.without_parking);
+    const premium = record.with_parking - record.without_parking;
+    $('premium').textContent = (premium > 0 ? '+' : '') + money(premium) + '/wk';
+    $('annualPremium').textContent = money(premium * 52) + ' over 52 weeks';
+    $('zeroPremium').hidden = premium !== 0;
+    $('gnaf').textContent = record.gnaf_id;
+    $('recordedParking').textContent = record.car_space === null ? 'Unknown' : record.car_space === 1 ? 'At least one car space' : 'No car space';
+    $('source').textContent = meta.source;
+    // Start with the known recorded scenario; unknown records start with parking.
+    setScenario(record.car_space !== 0);
+    document.querySelectorAll('.result').forEach(button => {
+      const active = button.dataset.id === id;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    if (window.innerWidth < 850) {
+      $('detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (error) {
+    if (ticket === detailSequence) {
+      selected = null;
+      $('empty').hidden = false;
+      showError(error);
+    }
+  } finally {
+    if (ticket === detailSequence) {
+      $('detailStatus').hidden = true;
+      $('detail').setAttribute('aria-busy', 'false');
+    }
+  }
+}
+function lockResults() {
+  $('results').setAttribute('aria-busy', 'true');
+  document.querySelectorAll('.result').forEach(button => { button.disabled = true; });
+  $('previous').disabled = true;
+  $('next').disabled = true;
+}
+async function search(page = 1) {
+  clearTimeout(timer);
+  const ticket = ++searchSequence;
+  clearSelection();
+  lockResults();
+  $('count').textContent = 'Searching…';
+  try {
+    const query = new URLSearchParams({
+      q: $('search').value, suburb: $('suburb').value,
+      beds: $('beds').value, page: String(page)
+    });
+    const result = await api('/api/search?' + query);
+    if (ticket !== searchSequence) return;
+    currentPage = result.page;
+    pageCount = result.pages;
+    $('error').hidden = true;
+    $('results').replaceChildren();
+    $('results').scrollTop = 0;
+    $('count').textContent = result.total ? `${result.start.toLocaleString()}–${result.end.toLocaleString()} of ${result.total.toLocaleString()} matching flats` : 'No matching flats';
+    $('pagination').hidden = result.pages <= 1;
+    $('pageLabel').textContent = `${currentPage} / ${pageCount}`;
+    $('previous').disabled = currentPage <= 1;
+    $('next').disabled = currentPage >= pageCount;
+    if (!result.items.length) {
+      const empty = document.createElement('p');
+      empty.className = 'no-results';
+      empty.textContent = 'Try a shorter street name or clear a filter. Search words can match the address, suburb or G-NAF ID.';
+      $('results').append(empty);
+    }
+    for (const item of result.items) {
+      const button = document.createElement('button');
+      button.className = 'result';
+      button.dataset.id = item.gnaf_id;
+      button.setAttribute('aria-pressed', 'false');
+      const title = document.createElement('strong');
+      title.textContent = displayAddress(item.address);
+      const description = document.createElement('span');
+      description.textContent = item.suburb + ' · ' + (item.bedrooms === null ? 'Bedrooms unknown' : item.bedrooms + ' bed') + ' · ' + (item.bathrooms === null ? 'Bathrooms unknown' : item.bathrooms + ' bath');
+      button.append(title, description);
+      button.addEventListener('click', () => choose(item.gnaf_id));
+      $('results').append(button);
+    }
+  } catch (error) {
+    if (ticket === searchSequence) {
+      $('count').textContent = 'Search unavailable';
+      $('results').replaceChildren();
+      $('pagination').hidden = true;
+      showError(error);
+    }
+  } finally {
+    if (ticket === searchSequence) $('results').setAttribute('aria-busy', 'false');
+  }
+}
+$('search').addEventListener('input', () => {
+  searchSequence++;
+  clearTimeout(timer);
+  clearSelection();
+  lockResults();
+  $('count').textContent = 'Searching…';
+  timer = setTimeout(() => search(1), 180);
+});
+for (const id of ['suburb', 'beds']) $(id).addEventListener('change', () => search(1));
+$('clear').addEventListener('click', () => {
+  $('search').value = ''; $('suburb').value = ''; $('beds').value = '';
+  search(1);
+  $('search').focus();
+});
+$('previous').addEventListener('click', () => search(currentPage - 1));
+$('next').addEventListener('click', () => search(currentPage + 1));
+$('with').addEventListener('click', () => setScenario(true));
+$('without').addEventListener('click', () => setScenario(false));
+document.addEventListener('keydown', event => {
+  if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    event.preventDefault(); $('search').focus();
+  }
+});
+(async () => {
+  try {
+    meta = await api('/api/meta');
+    if (meta.metrics) {
+      $('modelError').textContent = '$' + meta.metrics.median_absolute_error.toFixed(2);
+      $('modelWithin').textContent = meta.metrics.within_100_pct.toFixed(2) + '%';
+      $('modelR2').textContent = meta.metrics.r_squared.toFixed(3);
+      $('modelN').textContent = 'R² on ' + meta.metrics.n.toLocaleString() + ' adverts';
+      $('modelCheckLabel').textContent = 'May–July 2026 · ' + meta.metrics.n.toLocaleString() + ' adverts. Retrospective check; individual estimates may miss by more.';
+    } else {
+      $('modelCheckLabel').textContent = 'No verified evaluation metadata for this prediction file.';
+    }
+    $('coverage').textContent = meta.count.toLocaleString() + (meta.demo ? ' fictional demo flats' : ' flats · two scenarios each');
+    $('demoNotice').hidden = !meta.demo;
+    $('modeLabel').textContent = meta.demo ? '● Fictional demo' : '● Private local view';
+    $('reportLink').hidden = !meta.report_available;
+    for (const name of meta.suburbs) {
+      const option = document.createElement('option');
+      option.value = name; option.textContent = name;
+      $('suburb').append(option);
+    }
+    await search(1);
+  } catch (error) {
+    $('coverage').textContent = 'Unable to load flats';
+    $('count').textContent = 'Search unavailable';
+    showError(error);
+  }
+})();
+</script></body></html>

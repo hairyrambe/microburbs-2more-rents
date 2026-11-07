@@ -25,6 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import config as C  # noqa: E402
 
 AS_AT = pd.Timestamp(C.AS_AT)
+FILL_CHANGEABLE_FROM_INPUT = False  # fill an old advert's beds/baths/parking from the July 2026 input record?
+EARLY_STOPPING = False              # False = fixed 1,500 iterations on 100% of training adverts
 INDEX_FROM = pd.Timestamp("2015-01-01")    # adverts older than this are too stale to help
 
 
@@ -99,12 +101,16 @@ def clean_adverts(a, inp):
     f = inp.set_index("gnaf_id")
     g = a["gnaf"]
     a["mb"] = a["mb"].astype(float)
-    for k, col in [("beds", "bedrooms"), ("baths", "bathrooms"), ("car", "car_space"),
-                   ("building_address", "building_address"), ("mb", "mb")]:
+    fills = [("building_address", "building_address"), ("mb", "mb")]          # fixed facts about the address
+    if FILL_CHANGEABLE_FROM_INPUT:
+        fills += [("beds", "bedrooms"), ("baths", "bathrooms"), ("car", "car_space")]
+    for k, col in fills:
         if col in f.columns:
             a[k] = a[k].fillna(g.map(f[col]))
-    a = a.dropna(subset=["beds"])
-    a = a[a["beds"] <= 6]
+    a["car"] = np.where(a["car"].isna(), np.nan, (a["car"] > 0).astype(float))   # re-normalise after filling
+    if FILL_CHANGEABLE_FROM_INPUT:
+        a = a.dropna(subset=["beds"])
+    a = a[a["beds"].isna() | (a["beds"] <= 6)]
     log["usable"] = int(len(a))
 
     for c in ["floor_level", "flats_in_building", "block_new_homes_2021_2026", "block_homes_2026"]:
@@ -151,22 +157,47 @@ def group_stats(train, target, keys, name, loo):
     return pd.DataFrame({f"{name}_mean": mean, f"{name}_n": np.nan_to_num(n)}, index=target.index)
 
 
+def group_stats_past(df, keys, name):
+    """Mean adjusted log rent of the group from adverts on strictly EARLIER dates (date-blocked)."""
+    d = df[keys + ["date", "y"]].copy()
+    # rows with a missing key (e.g. unknown building) get no group mean, exactly as at prediction time
+    agg = d.groupby(keys + ["date"])["y"].agg(["sum", "count"]).reset_index().sort_values("date")
+    g = agg.groupby(keys)
+    agg["cs"] = g["sum"].cumsum() - agg["sum"]
+    agg["cn"] = g["count"].cumsum() - agg["count"]
+    m = d[keys + ["date"]].merge(agg[keys + ["date", "cs", "cn"]], on=keys + ["date"], how="left")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        mean = np.where(m["cn"].values > 0, m["cs"].values / m["cn"].values, np.nan)
+    return pd.DataFrame({f"{name}_mean": mean, f"{name}_n": m["cn"].fillna(0).values}, index=df.index)
+
+
 def prior_own_train(train):
     """For each training advert: the same flat's previous advert (adjusted rent, days ago, count)."""
+    # one row per flat per date (the last advert that day), then step back one DATE, not one row,
+    # so an advert never "remembers" another advert from the same day
     t = train.sort_values("date")
-    gb = t.groupby("key")
-    out = pd.DataFrame(index=t.index)
-    out["own_prev"] = gb["y"].shift(1)
-    out["own_prev_age"] = (t["date"] - gb["date"].shift(1)).dt.days
-    out["own_n"] = gb.cumcount()
-    out["own_prev_car"] = gb["car"].shift(1)
-    return out.reindex(train.index)
+    day = t.groupby(["key", "date"]).agg(y=("y", "last"), car=("car", "last"), n=("y", "size")).reset_index()
+    g = day.groupby("key")
+    day["own_prev"] = g["y"].shift(1)
+    day["prev_date"] = g["date"].shift(1)
+    day["own_prev_car"] = g["car"].shift(1)
+    day["own_n"] = g["n"].cumsum() - day["n"]
+    m = train[["key", "date"]].merge(day[["key", "date", "own_prev", "prev_date", "own_prev_car", "own_n"]],
+                                     on=["key", "date"], how="left")
+    out = pd.DataFrame(index=train.index)
+    out["own_prev"] = m["own_prev"].values
+    out["own_prev_age"] = (m["date"] - m["prev_date"]).dt.days.values
+    out["own_n"] = m["own_n"].values
+    out["own_prev_car"] = m["own_prev_car"].values
+    return out
 
 
 def prior_own_from(history, target, as_of):
     """For target flats: last advert in `history` (all dated before as_of)."""
-    last = history.sort_values("date").groupby("key").agg(
-        own_prev=("y", "last"), last_date=("date", "last"), own_n=("y", "size"), own_prev_car=("car", "last"))
+    h = history.sort_values("date")
+    last = h.groupby("key").tail(1).set_index("key")[["y", "date", "car"]].rename(
+        columns={"y": "own_prev", "date": "last_date", "car": "own_prev_car"})
+    last["own_n"] = h.groupby("key").size()
     m = target[["key"]].join(last, on="key")
     out = pd.DataFrame(index=target.index)
     out["own_prev"] = m["own_prev"].values
@@ -176,11 +207,16 @@ def prior_own_from(history, target, as_of):
     return out
 
 
-GROUPS = [("bb", ["building_address", "beds"]), ("b", ["building_address"]), ("mbb", ["mb", "beds"])]
+# building keys include the suburb: some street addresses repeat across suburbs
+GROUPS = [("bb", ["suburb_n", "building_address", "beds"]), ("b", ["suburb_n", "building_address"]), ("mbb", ["mb", "beds"])]
+
+
+ENCODING = "loo"   # "loo" or "past"; set by main after the comparison
 
 
 def features(df, history, codes, mode, as_of=None):
-    """mode='train' (leave-one-out on history==df) or 'apply' (history strictly earlier)."""
+    """mode='train' (history==df) or 'apply' (history strictly earlier).
+    Training group stats are leave-one-out (ENCODING='loo') or date-blocked past-only ('past')."""
     X = pd.DataFrame(index=df.index)
     for c in ["beds", "baths", "car", "lat", "lon", "floor_level", "flats_in_building",
               "block_new_homes_2021_2026", "block_homes_2026"]:
@@ -188,7 +224,10 @@ def features(df, history, codes, mode, as_of=None):
     X["suburb"] = df["suburb_n"].map(codes["suburb"]).astype(float)
     X["ptype"] = df["ptype_n"].map(codes["ptype"]).astype(float)
     for name, keys in GROUPS:
-        X = X.join(group_stats(history, df, keys, name, loo=(mode == "train")))
+        if mode == "train" and ENCODING == "past":
+            X = X.join(group_stats_past(df, keys, name))
+        else:
+            X = X.join(group_stats(history, df, keys, name, loo=(mode == "train")))
     own = prior_own_train(df) if mode == "train" else prior_own_from(history, df, as_of)
     X = X.join(own)
     X["own_gap"] = X["own_prev"] - X["bb_mean"]
@@ -201,7 +240,7 @@ def new_model(cols):
     return HistGradientBoostingRegressor(
         loss="absolute_error", learning_rate=0.05, max_iter=1500, max_leaf_nodes=63, min_samples_leaf=30,
         l2_regularization=1.0, categorical_features=cat,
-        early_stopping=True, validation_fraction=0.1, n_iter_no_change=50, random_state=0)
+        early_stopping=EARLY_STOPPING, validation_fraction=0.1, n_iter_no_change=50, random_state=0)
 
 
 # ----------------------------------------------------------------------------- metrics
@@ -235,6 +274,88 @@ def prep_input(inp):
     return d
 
 
+# ----------------------------------------------------------------------------- one prediction path
+def two_preds(model, Xp):
+    Xw, Xo = Xp.copy(), Xp.copy()
+    Xw["car"], Xo["car"] = 1.0, 0.0
+    for X in (Xw, Xo):
+        X["own_car_changed"] = (X["own_prev_car"] != X["car"]).astype(float).where(X["own_prev_car"].notna())
+    return np.exp(model.predict(Xw)), np.exp(model.predict(Xo)), Xw, Xo
+
+
+def finalise(pw, po, fb):
+    """Exactly what goes into the CSV: fallback, car space never lowers rent, round to 50c."""
+    pw = np.where(np.isfinite(pw), pw, fb)
+    po = np.where(np.isfinite(po), po, fb)
+    pw = np.maximum(pw, po)
+    return np.round(pw * 2) / 2, np.round(po * 2) / 2
+
+
+def predict_flats(hist, target, codes, as_of=None):
+    """Fit on `hist` (all adverts before some date) and price every INPUT flat, as at that date."""
+    hist = hist.copy()
+    as_of = as_of if as_of is not None else hist["date"].max()
+    idx = rent_index(hist)
+    hist["y"] = apply_index(hist, idx)
+    X = features(hist, hist, codes, "train")
+    model = new_model(list(X.columns)).fit(X, hist["y"])
+    Xp = features(target, hist, codes, "apply", as_of=as_of)
+    pw, po, Xw, Xo = two_preds(model, Xp)
+    fb = baseline_predict(hist, target)
+    fw, fo = finalise(pw, po, fb)
+    return {"n_iter": int(model.n_iter_), "model": model, "Xp": Xp, "Xw": Xw, "Xo": Xo, "pw_raw": pw, "po_raw": po, "fb": fb,
+            "pw": fw, "po": fo, "idx": idx, "base": baseline_predict(hist, target), "hist_n": len(hist)}
+
+
+def holdout_source(raw, inp):
+    """Held-out adverts as the scorer would see them: input flats only, no training filters."""
+    h = raw[["gnaf", "date", "rent", "car"]].copy()
+    h["date"] = pd.to_datetime(h["date"], errors="coerce").dt.normalize()
+    h["rent"] = pd.to_numeric(h["rent"], errors="coerce")
+    h["car"] = pd.to_numeric(h["car"], errors="coerce")
+    h = h.dropna(subset=["date", "rent"]).drop_duplicates()
+    h = h[h["gnaf"].isin(set(inp["gnaf_id"]))]
+    icar = h["gnaf"].map(inp.set_index("gnaf_id")["car_space"])
+    h["park"] = h["car"].where(h["car"].notna(), icar)            # advert parking, else the input record's
+    h = h[h["park"].notna()]
+    h["park"] = (h["park"] > 0).astype(int)
+    return h
+
+
+def evaluate(res, raw_ho, target, cut, end):
+    h = raw_ho[(raw_ho["date"] >= cut) & (raw_ho["date"] <= end)]
+    pos = pd.Series(np.arange(len(target)), index=target["gnaf_id"].values)
+    i = pos.loc[h["gnaf"].values].values
+    park = h["park"].values == 1
+    p = np.where(park, res["pw"][i], res["po"][i])
+    b = res["base"][i]
+    y = h["rent"].values
+    seen = res["Xp"]["own_prev"].notna().values[i]
+    return {"split": {"train_to": str((pd.Timestamp(cut) - pd.Timedelta(days=1)).date()), "val_from": cut,
+                      "val_to": end, "val_rows": int(len(h)), "train_rows": int(res["hist_n"])},
+            "model": score(y, p), "baseline_suburb_beds_median": score(y, b),
+            "seen": score(y[seen], p[seen]), "unseen": score(y[~seen], p[~seen]),
+            "with_car": score(y[park], p[park]), "no_car": score(y[~park], p[~park]),
+            "share_seen": float(seen.mean()), "_y": y, "_p": p, "_i": i, "_park": park}
+
+
+def dollar_importance(res, r, n_repeats=3):
+    """Permutation importance in DOLLARS: increase in median absolute dollar error when a feature is shuffled."""
+    rng = np.random.default_rng(0)
+    X = pd.concat([res["Xw"].iloc[r["_i"][r["_park"]]], res["Xo"].iloc[r["_i"][~r["_park"]]]])
+    y = np.concatenate([r["_y"][r["_park"]], r["_y"][~r["_park"]]])
+    base = np.median(np.abs(np.exp(res["model"].predict(X)) - y))
+    out = {}
+    for c in X.columns:
+        inc = []
+        for _ in range(n_repeats):
+            Xs = X.copy()
+            Xs[c] = rng.permutation(Xs[c].values)
+            inc.append(np.median(np.abs(np.exp(res["model"].predict(Xs)) - y)) - base)
+        out[c] = float(np.mean(inc))
+    return dict(sorted(out.items(), key=lambda kv: -kv[1]))
+
+
 # ----------------------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
@@ -258,74 +379,103 @@ def main():
     codes = {"suburb": {s: i for i, s in enumerate(sorted(set(adv["suburb_n"]) | set(target["suburb_n"])))},
              "ptype": {s: i for i, s in enumerate(sorted(set(adv["ptype_n"]) | set(target["ptype_n"])))}}
 
-    # ---------------- validation, everything learned before the cut
-    cut = pd.Timestamp(C.VAL_START)
-    tr = adv[adv["date"] < cut].copy()
-    va = adv[adv["date"] >= cut].copy()
-    va = va[va["car"].notna()]                                  # scorer drops adverts with unknown parking
-    idx_tr = rent_index(tr)
-    tr["y"] = apply_index(tr, idx_tr)
-    va["y"] = np.nan
-    as_of_tr = tr["date"].max()
-    print(f"Train {len(tr)} adverts (to {as_of_tr.date()}), validate {len(va)} ({va['date'].min().date()} -> {va['date'].max().date()})")
-    Xtr = features(tr, tr, codes, "train")
-    Xva = features(va, tr, codes, "apply", as_of=as_of_tr)
-    m = new_model(list(Xtr.columns)).fit(Xtr, tr["y"])
-    pv = np.exp(m.predict(Xva))                                 # in last-training-month dollars, like the real task
-    pb = baseline_predict(tr, va)
-    yv = va["rent"].values
+    global ENCODING
+    raw_ho = holdout_source(raw, inp)
+
+    # ---------------- validation: the EXACT submission pipeline, re-run as if the date were the cut
+    windows = {"A": ("2026-05-01", "2026-07-31"), "A_2months": ("2026-05-01", "2026-06-30"),
+               "B": ("2026-02-01", "2026-04-30")}
+    results, cache = {}, {}
+    for enc in ("loo", "past"):
+        ENCODING = enc
+        for cut in sorted({w[0] for w in windows.values()}):
+            cache[(enc, cut)] = predict_flats(adv[adv["date"] < cut], target, codes)
+        for wname, (cut, end) in windows.items():
+            r = evaluate(cache[(enc, cut)], raw_ho, target, cut, end)
+            results[(enc, wname)] = r
+            print(f"VALIDATION enc={enc:4s} window={wname:9s} n={r['model']['n']}  model ${r['model']['median_abs_error']:.1f} "
+                  f"{r['model']['within_100']*100:.1f}%  | baseline ${r['baseline_suburb_beds_median']['median_abs_error']:.1f} "
+                  f"{r['baseline_suburb_beds_median']['within_100']*100:.1f}%")
+    # pre-declared rule: keep leave-one-out unless past-only is better on BOTH main windows
+    better = all(results[("past", w)]["model"]["median_abs_error"] < results[("loo", w)]["model"]["median_abs_error"] for w in ("A", "B"))
+    ENCODING = "past" if better else "loo"
+    print("Chosen encoding:", ENCODING)
+
+    # calibration grid on the chosen pipeline; adopt only if it helps on BOTH windows without losing within-$100
+    grid = {}
+    for kind, vals in (("mult", [1.0, 0.99, 0.98]), ("offset", [0, -5, -10])):
+        for v in vals:
+            row = {}
+            for w in ("A", "B"):
+                r = results[(ENCODING, w)]
+                p = r["_p"] * v if kind == "mult" else r["_p"] + v
+                row[w] = score(r["_y"], p)
+            grid[f"{kind}={v}"] = row
+    base = grid["mult=1.0"]
+    winners = [k for k, row in grid.items() if k not in ("mult=1.0", "offset=0") and all(
+        row[w]["median_abs_error"] < base[w]["median_abs_error"] - 0.5 and row[w]["within_100"] >= base[w]["within_100"] for w in ("A", "B"))]
+    calib = min(winners, key=lambda k: sum(grid[k][w]["median_abs_error"] for w in ("A", "B"))) if winners else "mult=1.0"
+    for k, row in grid.items():
+        print(f"CALIBRATION {k:12s} A ${row['A']['median_abs_error']:.1f} {row['A']['within_100']*100:.1f}%  B ${row['B']['median_abs_error']:.1f} {row['B']['within_100']*100:.1f}%")
+    print("Chosen calibration:", calib)
+
+    rA = results[(ENCODING, "A")]
     metrics = {
-        "cleaning": log,
-        "split": {"train_rows": int(len(tr)), "val_rows": int(len(va)), "train_to": str(as_of_tr.date()),
-                  "val_from": str(va["date"].min().date()), "val_to": str(va["date"].max().date())},
-        "model": score(yv, pv),
-        "baseline_suburb_beds_median": score(yv, pb),
+        "cleaning": log, "encoding": ENCODING, "calibration": calib,
+        "split": rA["split"],
+        "model": rA["model"], "baseline_suburb_beds_median": rA["baseline_suburb_beds_median"],
+        "model_flat_seen_before": rA["seen"], "model_flat_never_advertised": rA["unseen"],
+        "model_with_car": rA["with_car"], "model_no_car": rA["no_car"],
+        "holdout_share_with_history": rA["share_seen"],
+        "windows": {f"{e}/{w}": {k: v for k, v in r.items() if not k.startswith("_")} for (e, w), r in results.items()},
+        "calibration_grid": grid,
         "benchmarks_from_task_page": {"simple": 100, "simple_with_parking": 93, "microburbs_valuation": 86,
                                       "microburbs_within_100": 0.5521, "suburb_median_within_100": 0.5639},
     }
-    seen = Xva["own_prev"].notna().values
-    metrics["model_flat_seen_before"] = score(yv[seen], pv[seen])
-    metrics["model_flat_never_advertised"] = score(yv[~seen], pv[~seen])
-    for flag, name in [(1.0, "with_car"), (0.0, "no_car")]:
-        s = (va["car"] == flag).values
-        if s.sum() > 30:
-            metrics[f"model_{name}"] = score(yv[s], pv[s])
-    for k in ["model", "baseline_suburb_beds_median", "model_flat_seen_before", "model_flat_never_advertised"]:
-        print(f"VALIDATION {k:30s}", {a: round(b, 3) for a, b in metrics[k].items()})
+    metrics["n_iter_by_fit"] = {f"{e}/{c}": r["n_iter"] for (e, c), r in cache.items()}
+    metrics["feature_importance"] = dollar_importance(cache[(ENCODING, "2026-05-01")], rA)
 
-    sub = Xva.sample(min(3000, len(Xva)), random_state=0)
-    ysub = np.log(va.loc[sub.index, "rent"])
-    pi = permutation_importance(m, sub, ysub, scoring="neg_median_absolute_error", n_repeats=3, random_state=0)
-    metrics["feature_importance"] = dict(sorted(
-        {c: float(v) * 100 for c, v in zip(Xtr.columns, pi.importances_mean)}.items(), key=lambda kv: -kv[1]))
-
-    # ---------------- final fit on everything up to 31 July 2026
-    idx = rent_index(adv)
-    adv["y"] = apply_index(adv, idx)
+    # ---------------- final: same function, all adverts up to 31 July 2026
+    fin = predict_flats(adv, target, codes, as_of=AS_AT)
+    metrics["n_iter_by_fit"]["final"] = fin["n_iter"]
+    kind, v = calib.split("=")
+    v = float(v)
+    pw, po = fin["pw_raw"], fin["po_raw"]
+    if kind == "mult":
+        pw, po = pw * v, po * v
+    else:
+        pw, po = pw + v, po + v
+    pw, po = finalise(pw, po, fin["fb"])
+    idx = fin["idx"]
     yr = idx[idx.index >= idx.index[-1] - 12]
     metrics["annual_rent_growth"] = float(np.exp(yr.iloc[-1] - yr.iloc[0]) - 1)
     metrics["rent_index"] = {str(k): float(np.exp(v)) for k, v in idx.items()}
-    Xall = features(adv, adv, codes, "train")
-    final = new_model(list(Xall.columns)).fit(Xall, adv["y"])
+    final, Xp, Xo = fin["model"], fin["Xp"], fin["Xo"]
+    po_model = fin["po_raw"]
 
-    Xp = features(target, adv, codes, "apply", as_of=AS_AT)
-    Xw, Xo = Xp.copy(), Xp.copy()
-    Xw["car"], Xo["car"] = 1.0, 0.0
-    for X in (Xw, Xo):
-        X["own_car_changed"] = (X["own_prev_car"] != X["car"]).astype(float).where(X["own_prev_car"].notna())
-    pw, po = np.exp(final.predict(Xw)), np.exp(final.predict(Xo))
-    pw = np.maximum(pw, po)
-    fb = baseline_predict(adv, target)
-    pw = np.where(np.isfinite(pw), pw, fb)
-    po = np.where(np.isfinite(po), po, fb)
-
-    out = pd.DataFrame({"gnaf_id": inp["gnaf_id"],
-                        "rent_with_car_space": np.round(pw * 2) / 2,
-                        "rent_without_car_space": np.round(po * 2) / 2})
-    assert out["gnaf_id"].is_unique and len(out) == len(inp)
+    out = pd.DataFrame({"gnaf_id": inp["gnaf_id"], "rent_with_car_space": pw, "rent_without_car_space": po})
+    assert out["gnaf_id"].is_unique and len(out) == len(inp) and set(out["gnaf_id"]) == set(inp["gnaf_id"])
     assert out.iloc[:, 1:].notna().all().all() and (out.iloc[:, 1:] > 0).all().all()
+    assert ((out.iloc[:, 1:] * 2) % 1 == 0).all().all()
     out.to_csv(C.FILE_OUT, index=False, encoding="utf-8")
     print(f"Wrote {C.FILE_OUT.name}: {len(out)} rows")
+    # verification files read by the local rent explorer (rent_app.py): it only shows accuracy
+    # when the CSV's fingerprint matches the one recorded here
+    import hashlib
+    iters = 1500 if not EARLY_STOPPING else -1
+    (C.ROOT / "history_manifest.json").write_text(json.dumps({
+        "model": "2more history model (src/build_model.py)", "iterations": iters, "cutoff": C.AS_AT,
+        "prediction_rows": int(len(out)), "prediction_sha256": hashlib.sha256(C.FILE_OUT.read_bytes()).hexdigest()}, indent=2))
+    mA_ = rA["model"]
+    (C.ROOT / "history_check.json").write_text(json.dumps({
+        "n": mA_["n"], "median_absolute_error": mA_["median_abs_error"], "within_100_pct": mA_["within_100"] * 100,
+        "r_squared": mA_["r2"], "mean_absolute_error": mA_["mean_abs_error"], "median_bias": mA_["median_bias"],
+        "origin": rA["split"]["train_to"], "start": rA["split"]["val_from"], "end": rA["split"]["val_to"], "iterations": iters,
+        "classification": "Development check (exact submission pipeline, input flats only); not the hidden judging score"}, indent=2))
+    gap = fin["pw_raw"] - fin["po_raw"]
+    metrics["parking_gap_clipped_to_zero"] = int((gap < 0).sum())
+    metrics["identical_columns"] = int((out["rent_with_car_space"] == out["rent_without_car_space"]).sum())
+    metrics["input_beds_over_6"] = int((target["beds"] > 6).sum())
 
     # ---------------- insights
     d = out.assign(beds=target["beds"].values, suburb=target["suburb"].values)
@@ -341,12 +491,13 @@ def main():
     k = Xp["floor_level"].notna()
     Xu = Xo[k].copy()
     Xu["floor_level"] += 5
-    ins["rent_per_extra_floor"] = float(np.median(np.exp(final.predict(Xu)) - po[k.values]) / 5)
+    ins["rent_per_extra_floor"] = float(np.median(np.exp(final.predict(Xu)) - po_model[k.values]) / 5)
     # floor effect on the raw adverts too (same building + beds, adjusted rent vs floor)
     metrics["insights"] = ins
     metrics["outputs"] = {"rows": int(len(out)), "file": C.FILE_OUT.name}
 
     # ---------------- figures
+    yv, pv = rA["_y"], rA["_p"]
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -363,9 +514,9 @@ def main():
     ax.axvline(0, color="k", lw=1); ax.set_xlabel("Estimate minus advertised rent ($/week)"); ax.set_ylabel("Adverts")
     fig.tight_layout(); fig.savefig(C.FIGS / "error_hist.png", dpi=130); plt.close(fig)
 
-    s = pd.Series(ins["parking_premium_by_beds"]).sort_index()
-    fig, ax = plt.subplots(figsize=(5, 3.5)); ax.bar(s.index, s.values)
-    ax.set_xlabel("Bedrooms"); ax.set_ylabel("Median car-space premium ($/week)")
+    s = pd.Series({int(k): v for k, v in ins["parking_premium_by_beds"].items() if int(k) <= 4}).sort_index()
+    fig, ax = plt.subplots(figsize=(5, 3.5)); ax.bar(["studio" if k == 0 else str(k) for k in s.index], s.values)
+    ax.set_xlabel("Bedrooms"); ax.set_ylabel("Median with/without gap ($/week)")
     fig.tight_layout(); fig.savefig(C.FIGS / "parking_by_beds.png", dpi=130); plt.close(fig)
 
     ri = pd.Series(metrics["rent_index"]); ri.index = pd.PeriodIndex(ri.index, freq="M").to_timestamp()

@@ -1,0 +1,13 @@
+{
+  "n": 3773,
+  "median_absolute_error": 43.0,
+  "within_100_pct": 80.65200106016432,
+  "r_squared": 0.9076289115661567,
+  "mean_absolute_error": 68.3896103896104,
+  "median_bias": 14.5,
+  "origin": "2026-04-30",
+  "start": "2026-05-01",
+  "end": "2026-07-31",
+  "iterations": 1500,
+  "classification": "Development check (exact submission pipeline, input flats only); not the hidden judging score"
+}

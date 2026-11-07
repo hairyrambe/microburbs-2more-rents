@@ -1,0 +1,7 @@
+{
+  "model": "2more history model (src/build_model.py)",
+  "iterations": 1500,
+  "cutoff": "2026-07-31",
+  "prediction_rows": 65777,
+  "prediction_sha256": "c41296b7d4afb6a86cadebad6dad5dc07d8fbd7eb323dbcfbc55ed36a513a458"
+}

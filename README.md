@@ -10,14 +10,15 @@ Microburbs Hackathon, 7 November 2026, **Task 4**. Weekly asking rent for every 
 | Demo (≤ 3 min) | `demo.mp4` |
 
 ## Results
-Held-out check: built only from adverts up to 30 April 2026, tested on 3,964 adverts from 1 May to 31 July 2026.
+Every check re-runs the exact submission pipeline as if the date were the cut-off (history and model from earlier adverts only, input-flat records, same rounding and parking rule), then scores the later adverts.
 
-| | Median abs. error | Within $100 | R² |
-|---|---|---|---|
-| **Our model** | **$45** | **79.6%** | **0.90** |
-| Suburb × bedrooms median | $100 | 55.5% | 0.61 |
+| Held-out window | Our model (median abs. error / within $100) | Suburb × bedrooms median |
+|---|---|---|
+| A: built to 30 Apr 2026, tested May–Jul 2026 (3,773 adverts) | **$43.0 / 80.7%**, R² 0.91 | $100 / 56.2% |
+| A, May–Jun only (2-month horizon, like the real test) | $41.0 / 81.9% | $100 / 56.9% |
+| B: built to 31 Jan 2026, tested Feb–Apr 2026 (2,656 adverts) | $44.5 / 79.1% | $100 / 56.1% |
 
-Method: a same-flat monthly rent index brings every past advert to July 2026 dollars. Then gradient-boosted trees use the flat's own rent history, the building's and ABS block's past rents, bedrooms, bathrooms, parking, floor and location. Each flat is scored twice, with the car-space flag set to 1 and to 0. Full detail in `report.html`.
+Method: a same-flat monthly rent index brings every past advert to July 2026 dollars. Gradient-boosted trees then use the past rents of the same ABS block and building (from earlier dates only), the flat's own last advert, bedrooms, bathrooms, parking, floor and location. Each flat is scored twice, with the car-space flag set to 1 and to 0. Old adverts keep their own recorded bedrooms, bathrooms and parking (never back-filled from the July input), and the model trains for a fixed 1,500 iterations on all data; both ideas came from Indra's stricter independent rebuild and improved both windows. Past-only averages beat leave-one-out averages on both windows; a bias correction did not help consistently, so none is applied. These are development checks (both windows informed choices), not official scores. Full detail and known limits are in `report.html`.
 
 ## Run it
 ```bash
@@ -33,7 +34,16 @@ python src/build_model.py --inspect   # check column mapping (fix in src/config.
 python src/build_model.py             # validate, fit, write rents_2more.csv
 python src/build_report.py            # write report.html
 ```
-`tools/val_experiments.py` re-runs the held-out checks of a fixed parking premium and a scaling adjustment, both of which we rejected. `tools/analyse.py` measures the raw within-building parking premium. `tools/make_fake_data.py` makes synthetic data to test the code (`MB_DATA=fake_data python src/build_model.py`). It was never used for the submitted estimates.
+`src/build_model.py` runs all validation windows, the encoding comparison and the calibration grid itself. `tools/` holds earlier exploratory checks (fixed parking premium, ensembles, raw within-building parking difference). `tools/make_fake_data.py` makes synthetic data to test the code (`MB_DATA=fake_data python src/build_model.py`). It was never used for the submitted estimates.
+
+## Rent explorer app (local)
+**Easiest:** open `rent-explorer-demo.html` (fictional flats, safe to share). `python tools/build_standalone.py` builds the full single-file version with all 65,777 flats from the supplied data; it is git-ignored because it contains supplied addresses.
+
+A local web app to look up any flat's estimate with and without parking (design and app code by Indra; wired to this repo's model).
+- Put the supplied `rents-input-flats-city-of-sydney.csv` in `data/` (git-ignored; never committed).
+- Mac: double-click `START_RENT_APP.command` (or run `python3 rent_app.py`). Windows: `START_RENT_APP.cmd`. It opens http://127.0.0.1:8765.
+- No data? `START_DEMO_APP.command` / `.cmd` shows four fictional flats, safe for public recordings.
+- The accuracy panel only appears when `rents_2more.csv` matches the fingerprint in `history_manifest.json`, written by `src/build_model.py`. Tests: `python3 -m unittest test_rent_app`.
 
 ## Date rule
 Nothing dated after 31 July 2026 is used. API adverts are requested with `to_date=2026-07-31`, and the model drops and asserts against any later advert. We never use the live `listings/for-rent` endpoint or the official Aug–Sep frozen adverts.
@@ -50,5 +60,8 @@ No API key, no supplied files, and no API output. `data/`, `raw/` and `.env` are
 - Libraries: pandas, NumPy, scikit-learn, matplotlib, requests.
 - TODO: add any other open data used (e.g. OpenStreetMap © OpenStreetMap contributors, ODbL).
 
+## Credits within the team
+Indra independently rebuilt the model more strictly and cross-checked it on the same adverts (within $1 of ours); two of those changes are adopted here.
+
 ## Team
-Noel Koh, Alden Bay, Indrapa Hewakaluge.
+Noel Koh, Alden, Indra.
