@@ -20,7 +20,7 @@ Every check re-runs the exact submission pipeline as if the date were the cut-of
 | A, May–Jun only (2-month horizon, like the real test) | $41.0 / 81.9% | $100 / 56.9% |
 | B: built to 31 Jan 2026, tested Feb–Apr 2026 (2,656 adverts) | $44.5 / 79.1% | $100 / 56.1% |
 
-Method: a same-flat monthly rent index brings every past advert to July 2026 dollars. Gradient-boosted trees then use the past rents of the same ABS block and building (from earlier dates only), the flat's own last advert, bedrooms, bathrooms, parking, floor and location. Each flat is scored twice, with the car-space flag set to 1 and to 0. Old adverts keep their own recorded bedrooms, bathrooms and parking (never back-filled from the July input), and the model trains for a fixed 1,500 iterations on all data; both ideas came from Indra's stricter independent rebuild and improved both windows. Past-only averages beat leave-one-out averages on both windows; a bias correction did not help consistently, so none is applied. These are development checks (both windows informed choices), not official scores. Full detail and known limits are in `report.html`.
+Method: a same-flat monthly rent index brings every past advert to July 2026 dollars. Gradient-boosted trees then use the past rents of the same ABS block and building (from earlier dates only), the flat's own last advert, bedrooms, bathrooms, parking, floor and location. Each flat is scored twice, with the car-space flag set to 1 and to 0. Old adverts keep their own recorded bedrooms, bathrooms and parking (never back-filled from the July input), and the model trains for a fixed 1,500 iterations on all data; both ideas came from Indrapa's stricter independent rebuild and improved both windows. Past-only averages beat leave-one-out averages on both windows; a bias correction did not help consistently, so none is applied. These are development checks (both windows informed choices), not official scores. Full detail and known limits are in `report.html`.
 
 ## Run it
 ```bash
@@ -41,7 +41,7 @@ python src/build_report.py            # write report.html
 ## Rent explorer app (local)
 **Easiest:** open `rent-explorer-demo.html` (fictional flats, safe to share). `python tools/build_standalone.py` builds the full single-file version with all 65,777 flats from the supplied data; it is git-ignored because it contains supplied addresses.
 
-A local web app to look up any flat's estimate with and without parking (design and app code by Indra; wired to this repo's model).
+A local web app to look up any flat's estimate with and without parking (design and app code by Indrapa Hewakaluge; wired to this repo's model).
 - Put the supplied `rents-input-flats-city-of-sydney.csv` in `data/` (git-ignored; never committed).
 - Mac: double-click `START_RENT_APP.command` (or run `python3 rent_app.py`). Windows: `START_RENT_APP.cmd`. It opens http://127.0.0.1:8765.
 - No data? `START_DEMO_APP.command` / `.cmd` shows four fictional flats, safe for public recordings.
