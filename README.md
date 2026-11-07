@@ -9,6 +9,8 @@ Microburbs Hackathon, 7 November 2026, **Task 4**. Weekly asking rent for every 
 | Pitch (≤ 45 s) | `pitch.mp4` |
 | Demo (≤ 3 min) | `demo.mp4` |
 
+**Live links:** [Report](https://hairyrambe.github.io/microburbs-2more-rents/report.html) · [Rent explorer demo (fictional flats)](https://hairyrambe.github.io/microburbs-2more-rents/rent-explorer-demo.html)
+
 ## Results
 Every check re-runs the exact submission pipeline as if the date were the cut-off (history and model from earlier adverts only, input-flat records, same rounding and parking rule), then scores the later adverts.
 
@@ -58,10 +60,9 @@ No API key, no supplied files, and no API output. `data/`, `raw/` and `.env` are
 - **G-NAF** address identifiers. © Geoscape Australia, under the G-NAF End User Licence Agreement.
 - API client pattern adapted from [microburbs-hackathon-demos](https://github.com/Microburbs/microburbs-hackathon-demos) (MIT).
 - Libraries: pandas, NumPy, scikit-learn, matplotlib, requests.
-- TODO: add any other open data used (e.g. OpenStreetMap © OpenStreetMap contributors, ODbL).
-
-## Credits within the team
-Indra independently rebuilt the model more strictly and cross-checked it on the same adverts (within $1 of ours); two of those changes are adopted here.
+- No other external data, images or live listings were used to build the estimates. The explorer's "Find listings" links only open a web search for the address.
 
 ## Team
-Noel Koh, Indrapa Hewakaluge, Alden Bay.
+- **Noel Koh**: modelling pipeline, validation and report.
+- **Indra**: rent explorer app, and an independent stricter rebuild of the model that cross-checked ours on the same adverts (within $1); two of its changes are adopted here.
+- **Alden Bay**: pitch and demo.
