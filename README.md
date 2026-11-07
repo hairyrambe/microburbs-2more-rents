@@ -64,4 +64,4 @@ No API key, no supplied files, and no API output. `data/`, `raw/` and `.env` are
 Indra independently rebuilt the model more strictly and cross-checked it on the same adverts (within $1 of ours); two of those changes are adopted here.
 
 ## Team
-Noel Koh, Alden, Indra.
+Noel Koh, Indrapa Hewakaluge, Alden Bay.
